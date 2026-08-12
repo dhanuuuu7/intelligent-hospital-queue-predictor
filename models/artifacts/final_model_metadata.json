@@ -1,0 +1,52 @@
+{
+    "model_name": "Tuned Random Forest",
+    "feature_version": "2.0_engineered_and_tuned",
+    "total_features": 24,
+    "input_features": [
+        "department_name",
+        "season_indicator",
+        "patient_arrival_type",
+        "patient_case_complexity",
+        "day_of_week",
+        "hour_of_day",
+        "is_weekend_or_holiday",
+        "queue_position",
+        "scheduled_patients_ahead",
+        "walkin_patients_ahead",
+        "active_doctors_count",
+        "doctors_on_break_count",
+        "triage_staff_count",
+        "shift_handover_flag",
+        "emergency_cases_active",
+        "arrival_rate_past_30min",
+        "recent_throughput_past_hour",
+        "avg_waiting_time_last_30min",
+        "dept_service_time_variability",
+        "hospital_occupancy_rate",
+        "effective_doctor_load",
+        "traffic_momentum",
+        "emergency_pressure",
+        "scheduled_ratio_ahead"
+    ],
+    "hyperparameters": {
+        "n_estimators": 150,
+        "max_depth": 10,
+        "min_samples_leaf": 1,
+        "max_features": "sqrt",
+        "min_samples_split": 2
+    },
+    "trained_date": "2026-08-12 12:52:45",
+    "validation_metrics": {
+        "MAE": 11.1935,
+        "RMSE": 47.5041,
+        "R2": 0.2292
+    },
+    "test_metrics": {
+        "Test_MAE": 10.7066,
+        "Test_RMSE": 45.9751,
+        "Test_R2": 0.228,
+        "Median_AE": 4.777,
+        "P75_AE": 9.5431,
+        "P90_AE": 18.429
+    }
+}

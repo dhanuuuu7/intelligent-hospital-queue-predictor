@@ -1,0 +1,5 @@
+Department,MAE (min),90th Percentile Error (min),High Volatility Flag,Primary Variance Hypothesis
+Cardiology,14.33,26.67,YES,High consult time variability (sigma=18.0) and emergency preemption spikes
+General Medicine,3.99,6.93,NO,Standard queue dynamics
+Orthopedics,9.46,19.28,YES,Standard queue dynamics
+Pediatrics,6.94,13.14,NO,Standard queue dynamics

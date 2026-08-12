@@ -1,0 +1,5 @@
+Department,Sample Count,Actual Mean Wait (min),Pred Mean Wait (min),MAE (min),RMSE (min),R2 Score
+Cardiology,56,24.55,28.05,14.33,19.3,0.1014
+General Medicine,212,6.34,6.07,3.99,5.45,0.1097
+Orthopedics,92,14.82,14.46,9.46,16.59,-0.1456
+Pediatrics,140,9.92,10.66,6.94,10.52,-0.1639

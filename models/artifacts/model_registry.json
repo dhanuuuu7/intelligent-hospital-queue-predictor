@@ -1,0 +1,30 @@
+{
+    "production_model": "final_waiting_time_model.joblib",
+    "model_version": "1.0.0",
+    "algorithm": "RandomForestRegressor",
+    "feature_engineering_version": "8.2",
+    "trained_at": "2026-08-12 12:45:00",
+    "validation_metrics": {
+        "validation_mae": 11.1935,
+        "validation_rmse": 47.5041,
+        "validation_r2": 0.2292
+    },
+    "test_metrics": {
+        "test_mae": 10.7066,
+        "test_rmse": 45.9751,
+        "test_r2": 0.2280,
+        "median_absolute_error": 4.7770,
+        "p90_absolute_error": 18.4290
+    },
+    "prediction_interval_coverage": {
+        "target_80_pct": 79.48,
+        "target_90_pct": 89.31,
+        "target_95_pct": 94.42
+    },
+    "department_coverage_90_pct": {
+        "General Medicine": 96.38,
+        "Pediatrics": 90.96,
+        "Orthopedics": 85.50,
+        "Cardiology": 63.92
+    }
+}

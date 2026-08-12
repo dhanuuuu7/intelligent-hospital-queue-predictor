@@ -1,0 +1,41 @@
+{
+    "model_name": "Random Forest",
+    "trained_date": "2026-08-12 12:26:03",
+    "total_dataset_records": 24002,
+    "train_records": 16801,
+    "val_records": 3600,
+    "test_records": 3601,
+    "input_features": [
+        "department_name",
+        "season_indicator",
+        "patient_arrival_type",
+        "patient_case_complexity",
+        "day_of_week",
+        "hour_of_day",
+        "is_weekend_or_holiday",
+        "queue_position",
+        "scheduled_patients_ahead",
+        "walkin_patients_ahead",
+        "active_doctors_count",
+        "doctors_on_break_count",
+        "triage_staff_count",
+        "shift_handover_flag",
+        "emergency_cases_active",
+        "arrival_rate_past_30min",
+        "recent_throughput_past_hour",
+        "avg_waiting_time_last_30min",
+        "dept_service_time_variability",
+        "hospital_occupancy_rate"
+    ],
+    "target_variable": "actual_waiting_time_min",
+    "validation_metrics": {
+        "MAE": 11.8236,
+        "RMSE": 51.4318,
+        "R2": 0.0965
+    },
+    "test_metrics": {
+        "MAE": 10.9252,
+        "RMSE": 45.944,
+        "R2": 0.2291
+    }
+}

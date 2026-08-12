@@ -1,0 +1,55 @@
+{
+    "model_name": "XGBoost",
+    "feature_version": "2.0_engineered",
+    "total_features_count": 24,
+    "input_features": [
+        "department_name",
+        "season_indicator",
+        "patient_arrival_type",
+        "patient_case_complexity",
+        "day_of_week",
+        "hour_of_day",
+        "is_weekend_or_holiday",
+        "queue_position",
+        "scheduled_patients_ahead",
+        "walkin_patients_ahead",
+        "active_doctors_count",
+        "doctors_on_break_count",
+        "triage_staff_count",
+        "shift_handover_flag",
+        "emergency_cases_active",
+        "arrival_rate_past_30min",
+        "recent_throughput_past_hour",
+        "avg_waiting_time_last_30min",
+        "dept_service_time_variability",
+        "hospital_occupancy_rate",
+        "effective_doctor_load",
+        "traffic_momentum",
+        "emergency_pressure",
+        "scheduled_ratio_ahead"
+    ],
+    "engineered_features": [
+        "effective_doctor_load",
+        "traffic_momentum",
+        "emergency_pressure",
+        "scheduled_ratio_ahead"
+    ],
+    "target_variable": "actual_waiting_time_min",
+    "trained_date": "2026-08-12 12:41:12",
+    "validation_metrics": {
+        "MAE": 11.3824,
+        "RMSE": 53.9014,
+        "R2": 0.0076,
+        "Baseline_RF_Val_MAE": 11.8236,
+        "MAE_Improvement_vs_Baseline": 0.4412,
+        "Pct_Improvement_vs_Baseline": 3.73
+    },
+    "test_metrics": {
+        "Test_MAE": 10.5646,
+        "Test_RMSE": 46.8175,
+        "Test_R2": 0.1995,
+        "Median_AE": 4.3501,
+        "P75_AE": 8.6119,
+        "P90_AE": 16.8491
+    }
+}

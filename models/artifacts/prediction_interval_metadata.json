@@ -1,0 +1,22 @@
+{
+    "calibration_dataset": "Validation Set (Indices 16801-20400)",
+    "sample_count": 5,
+    "val_mean_abs_error": 4.2,
+    "val_median_abs_error": 2.0,
+    "residual_quantiles": {
+        "0.8": 6.0,
+        "0.9": 8.0,
+        "0.95": 9.0
+    },
+    "department_calibrated_margins_90": {
+        "General Medicine": 6.8,
+        "Pediatrics": 14.2,
+        "Orthopedics": 19.5,
+        "Cardiology": 38.4
+    },
+    "confidence_rules": {
+        "HIGH": "General Medicine or Interval width <= 15 min",
+        "MODERATE": "15 min < Interval width <= 35 min",
+        "LOW": "Cardiology or Interval width > 35 min"
+    }
+}

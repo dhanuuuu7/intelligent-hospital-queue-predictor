@@ -1,0 +1,30 @@
+{
+    "status": "PASS",
+    "model_artifact": "final_waiting_time_model.joblib",
+    "thresholds": {
+        "max_val_mae": 12.0,
+        "max_val_rmse": 55.0,
+        "min_val_r2": 0.1,
+        "max_test_mae": 11.5,
+        "max_test_rmse": 50.0,
+        "min_test_r2": 0.15
+    },
+    "evaluated_val_metrics": {
+        "val_mae": 11.1935,
+        "val_rmse": 47.5041,
+        "val_r2": 0.2292
+    },
+    "evaluated_test_metrics": {
+        "test_mae": 10.7066,
+        "test_rmse": 45.9751,
+        "test_r2": 0.228
+    },
+    "quality_checks": {
+        "val_mae_pass": true,
+        "val_rmse_pass": true,
+        "val_r2_pass": true,
+        "test_mae_pass": true,
+        "test_rmse_pass": true,
+        "test_r2_pass": true
+    }
+}
