@@ -2,6 +2,7 @@
 Phase 12 Automated Testing Suite: Database, WebSockets, Analytics Forecasting, ML Feedback Loop, and Security Audit
 """
 
+import json
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
@@ -21,7 +22,11 @@ def test_database_initialization_and_orm():
     db = SessionLocal()
     try:
         # Insert test audit entry
-        audit = AuditLogDB(user_email="admin@hospital.com", action="TEST_INIT", details="Initializing DB test")
+        audit = AuditLogDB(
+            user_email="admin@hospital.com", 
+            action="TEST_INIT", 
+            details=json.dumps({"message": "Initializing DB test"})
+        )
         db.add(audit)
         db.commit()
 
