@@ -4,8 +4,8 @@ import { Clock, Users, UserCheck, Calendar, RefreshCw, AlertCircle, ShieldCheck,
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
 export default function PatientView({ departments, onAddPatient, patientSession }) {
-  const [department, setDepartment] = useState('General Medicine');
-  const [arrivalType, setArrivalType] = useState('Scheduled');
+  const [department, setDepartment] = useState(patientSession?.department || 'General Medicine');
+  const [arrivalType, setArrivalType] = useState(patientSession?.arrivalType || 'Scheduled');
   
   const [predictionData, setPredictionData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -13,6 +13,34 @@ export default function PatientView({ departments, onAddPatient, patientSession 
 
   // Active check-in ticket state
   const [checkInTicket, setCheckInTicket] = useState(null);
+
+  // Sync state whenever patientSession is provided from login/checkin screen
+  useEffect(() => {
+    if (patientSession) {
+      if (patientSession.department) setDepartment(patientSession.department);
+      if (patientSession.arrivalType) setArrivalType(patientSession.arrivalType);
+
+      // Auto-populate ticket from session
+      const prefixMap = {
+        'General Medicine': 'GM',
+        'Pediatrics': 'PED',
+        'Orthopedics': 'ORTH',
+        'Cardiology': 'CARD'
+      };
+      const deptName = patientSession.department || 'Pediatrics';
+      const deptObj = departments ? departments.find(d => d.name === deptName) : null;
+      const qPos = deptObj ? deptObj.waiting : 8;
+      const code = patientSession.opNumber || `${prefixMap[deptName] || 'GEN'}-108`;
+
+      setCheckInTicket({
+        code: code,
+        department: deptName,
+        position: qPos,
+        arrivalType: patientSession.arrivalType || 'Scheduled',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      });
+    }
+  }, [patientSession]);
 
   // Lookup staff assigned active doctors & live waiting queue from backend state
   const currentDeptObj = departments ? departments.find(d => d.name === department) : null;

@@ -56,4 +56,6 @@ htmlcov/
 .idea/
 *.swp
 *.swo
-.DS_Store
+*.DS_Store
+*.db
+student-performance-predictor/

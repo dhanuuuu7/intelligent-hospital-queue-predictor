@@ -286,5 +286,22 @@ def run_benchmark_step_8_3():
     return results_df, metadata_fe
 
 
+def train_feature_engineered_rf(X_train: pd.DataFrame, y_train: pd.Series, X_val: pd.DataFrame, y_val: pd.Series) -> Tuple[Any, Dict[str, float]]:
+    """
+    Fits and returns feature-engineered Random Forest pipeline and validation metrics.
+    """
+    rf_model = RandomForestRegressor(n_estimators=100, max_depth=12, random_state=42, n_jobs=-1)
+    pipeline = create_full_pipeline(
+        model=rf_model,
+        categorical_cols=CATEGORICAL_FEATURES,
+        numerical_cols=ALL_EXPANDED_NUMERICAL_FEATURES,
+        scale_numeric=True
+    )
+    pipeline.fit(X_train, y_train)
+    val_preds = pipeline.predict(X_val)
+    metrics = calculate_metrics(y_val, val_preds)
+    return pipeline, {"val_mae": metrics["MAE"], "val_rmse": metrics["RMSE"], "val_r2": metrics["R2"]}
+
+
 if __name__ == "__main__":
     run_benchmark_step_8_3()

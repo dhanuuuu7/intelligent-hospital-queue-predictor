@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AlertTriangle, Sparkles, Info, UserMinus, UserPlus, Sliders, Activity, TrendingDown, TrendingUp, ShieldAlert } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, Sparkles, Info, UserMinus, UserPlus, Sliders, Activity, TrendingDown, TrendingUp, ShieldAlert, Cpu, BarChart3, LineChart, CheckCircle2, Building2, Send, RefreshCw } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
@@ -10,6 +10,55 @@ export default function StaffView({ departments, onDoctorChange, onCallNext }) {
   const [whatIfResult, setWhatIfResult] = useState(null);
   const [simLoading, setSimLoading] = useState(false);
 
+  // Phase 12 & 13 Enterprise State
+  const [forecastData, setForecastData] = useState(null);
+  const [aiRecommendation, setAiRecommendation] = useState(null);
+  const [feedbackMetrics, setFeedbackMetrics] = useState(null);
+  const [fleetStatus, setFleetStatus] = useState(null);
+  const [retrainStatus, setRetrainStatus] = useState(null);
+  const [retrainLoading, setRetrainLoading] = useState(false);
+  const [sentAlerts, setSentAlerts] = useState([]);
+
+  const fetchOperationsIntelligence = async () => {
+    try {
+      const fRes = await fetch(`${API_BASE_URL}/analytics/forecast/${encodeURIComponent(selectedSimDept)}`);
+      if (fRes.ok) setForecastData(await fRes.json());
+
+      const rRes = await fetch(`${API_BASE_URL}/analytics/recommendation/${encodeURIComponent(selectedSimDept)}`);
+      if (rRes.ok) setAiRecommendation(await rRes.json());
+
+      const mRes = await fetch(`${API_BASE_URL}/feedback/metrics`);
+      if (mRes.ok) setFeedbackMetrics(await mRes.json());
+
+      const flRes = await fetch(`${API_BASE_URL}/fleet/network-status`);
+      if (flRes.ok) setFleetStatus(await flRes.json());
+
+      const nRes = await fetch(`${API_BASE_URL}/notifications/logs`);
+      if (nRes.ok) setSentAlerts(await nRes.json());
+    } catch (e) {
+      console.warn('Phase 12/13 analytics offline fallback.');
+    }
+  };
+
+  useEffect(() => {
+    fetchOperationsIntelligence();
+  }, [selectedSimDept, departments]);
+
+  const handleTriggerAutoRetrain = async () => {
+    setRetrainLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/mlops/auto-retrain`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setRetrainStatus(data);
+      }
+    } catch (e) {
+      console.warn('Auto-retrain offline fallback.');
+    } finally {
+      setRetrainLoading(false);
+    }
+  };
+
   const runWhatIfSimulation = async () => {
     setSimLoading(true);
     try {
@@ -19,6 +68,7 @@ export default function StaffView({ departments, onDoctorChange, onCallNext }) {
       if (res.ok) {
         const data = await res.json();
         setWhatIfResult(data);
+        setSimLoading(false);
         return;
       }
     } catch (e) {
@@ -63,24 +113,49 @@ export default function StaffView({ departments, onDoctorChange, onCallNext }) {
         className="glass-card" 
         style={{ 
           padding: '20px 24px', 
-          borderLeft: '4px solid #ef4444', 
+          borderLeft: '4px solid #10b981', 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between',
-          background: 'rgba(239, 68, 68, 0.08)'
+          background: 'rgba(16, 185, 129, 0.08)'
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <AlertTriangle size={24} color="#f87171" />
+          <Sparkles size={24} color="#34d399" />
           <div>
-            <h4 style={{ fontWeight: '600', color: '#f8fafc' }}>Staff Control Center & Operations Alert</h4>
+            <h4 style={{ fontWeight: '600', color: '#f8fafc' }}>Phase 13 Enterprise Fleet & Self-Healing MLOps Platform Active</h4>
             <p style={{ fontSize: '0.875rem', color: '#94a3b8' }}>
-              Staff updates immediately adjust backend hospital state and update patient waiting time predictions.
+              Multi-hospital fleet network, WebSockets real-time sync, SMS dispatcher, and auto-retraining pipeline online.
             </p>
           </div>
         </div>
-        <span className="badge badge-high">2 High Load Depts</span>
+        <button
+          onClick={handleTriggerAutoRetrain}
+          disabled={retrainLoading}
+          style={{
+            padding: '8px 14px',
+            borderRadius: '8px',
+            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+            color: 'white',
+            fontWeight: '700',
+            fontSize: '0.85rem',
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+        >
+          <RefreshCw size={14} className={retrainLoading ? 'spin' : ''} /> {retrainLoading ? 'Retraining...' : 'Trigger MLOps Self-Heal'}
+        </button>
       </div>
+
+      {/* Retrain Status Banner */}
+      {retrainStatus && (
+        <div style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '14px', borderRadius: '10px', color: '#38bdf8', fontSize: '0.9rem' }}>
+          <strong>MLOps Retrain Result ({retrainStatus.status}):</strong> {retrainStatus.action} • Test MAE: {retrainStatus.test_mae} min • Test R²: {retrainStatus.test_r2}
+        </div>
+      )}
 
       {/* Operational Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
@@ -165,6 +240,61 @@ export default function StaffView({ departments, onDoctorChange, onCallNext }) {
             </div>
           );
         })}
+      </div>
+
+      {/* PHASE 13: Multi-Hospital Fleet Network & Position SMS Log */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+        {/* Fleet Network Status Card */}
+        <div className="glass-card" style={{ padding: '24px' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Building2 size={20} color="#34d399" /> Multi-Hospital Fleet Network Capacity
+          </h3>
+
+          {fleetStatus ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {fleetStatus.map((fac) => (
+                <div key={fac.facility_id} style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '12px 14px', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div>
+                    <div style={{ fontWeight: '600', color: '#f8fafc', fontSize: '0.9rem' }}>{fac.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Distance: {fac.distance_km} km • Total Waiting: {fac.total_waiting}</div>
+                  </div>
+                  <span className={`badge ${fac.load_status === 'OPTIMAL' ? 'badge-low' : 'badge-high'}`}>
+                    {fac.avg_wait_min}m wait
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Loading regional fleet data...</div>
+          )}
+        </div>
+
+        {/* Patient SMS Alert Log Card */}
+        <div className="glass-card" style={{ padding: '24px' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Send size={20} color="#60a5fa" /> Automated Patient SMS Alerts Log (Position ≤ #3)
+          </h3>
+
+          {sentAlerts && sentAlerts.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {sentAlerts.map((alt) => (
+                <div key={alt.id} style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #3b82f6' }}>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>To: <strong>{alt.patient_name}</strong> ({alt.op_number})</span>
+                    <span style={{ color: '#34d399' }}>{alt.status}</span>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#cbd5e1', marginTop: '4px' }}>
+                    {alt.message}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ color: '#94a3b8', fontSize: '0.85rem', textAlign: 'center', padding: '20px 0' }}>
+              Automated SMS alerts dispatch when a patient's backend queue position reaches #3.
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Staff Decision Support "What-If" Scenario Simulator */}
@@ -263,41 +393,6 @@ export default function StaffView({ departments, onDoctorChange, onCallNext }) {
               </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* AI Queue Insights & MLOps Monitoring Dashboard */}
-      <div className="glass-card" style={{ padding: '24px' }}>
-        <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Sparkles size={20} color="#a855f7" /> AI Queue Insights & Department Explainability
-        </h3>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
-          {departments && departments.map((dept) => (
-            <div key={`insight-${dept.name}`} style={{ background: 'rgba(15, 23, 42, 0.6)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontWeight: '600', color: '#f8fafc' }}>{dept.name}</span>
-                <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', background: dept.confidence === 'HIGH' ? 'rgba(16, 185, 129, 0.2)' : dept.confidence === 'MODERATE' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(239, 68, 68, 0.2)', color: dept.confidence === 'HIGH' ? '#34d399' : dept.confidence === 'MODERATE' ? '#fbbf24' : '#f87171' }}>
-                  {dept.confidence} CONFIDENCE
-                </span>
-              </div>
-              <div style={{ fontSize: '0.85rem', color: '#94a3b8', marginBottom: '10px' }}>
-                Range: <strong style={{ color: '#38bdf8' }}>{dept.range}</strong>
-              </div>
-              <div style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Top Queue Drivers:</div>
-                {dept.drivers.map((driver, i) => (
-                  <div key={i} style={{ marginBottom: '2px' }}>{driver}</div>
-                ))}
-              </div>
-
-              {dept.name === 'Cardiology' && (
-                <div style={{ fontSize: '0.75rem', color: '#f59e0b', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(245, 158, 11, 0.1)', padding: '6px', borderRadius: '6px' }}>
-                  <Info size={14} /> Cardiology predictions use department-specific calibration (±38m range) due to consult volatility.
-                </div>
-              )}
-            </div>
-          ))}
         </div>
       </div>
     </div>

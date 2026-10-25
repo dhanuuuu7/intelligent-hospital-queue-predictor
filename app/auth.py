@@ -9,10 +9,40 @@ from fastapi import Header, HTTPException, Depends
 
 
 STAFF_CREDENTIALS = {
-    "staff@hospital.com": "staff123",
-    "admin@hospital.com": "admin123",
-    "doctor@hospital.com": "doctor123"
+    "staff@hospital.com": {"password": "staff123", "name": "Dr. Kumar (Staff Operations)"},
+    "admin@hospital.com": {"password": "admin123", "name": "System Administrator"},
+    "doctor@hospital.com": {"password": "doctor123", "name": "Dr. Priya (Cardiology Lead)"}
 }
+
+
+def register_new_staff(email: str, password: str, name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Registers a new hospital staff member email and password.
+    """
+    email_clean = email.strip().lower()
+    if not email_clean:
+        raise HTTPException(status_code=400, detail="Email is required.")
+    
+    formatted_name = name.strip() if name else f"Staff Member ({email_clean.split('@')[0].capitalize()})"
+    STAFF_CREDENTIALS[email_clean] = {
+        "password": password.strip(),
+        "name": formatted_name
+    }
+    return {
+        "email": email_clean,
+        "name": formatted_name,
+        "status": "REGISTERED_SUCCESSFULLY"
+    }
+
+
+def get_all_staff_members() -> list:
+    """
+    Returns list of all registered hospital staff members.
+    """
+    return [
+        {"email": email, "name": info["name"], "role": "staff"}
+        for email, info in STAFF_CREDENTIALS.items()
+    ]
 
 
 def authenticate_staff_credentials(email: str, password: str) -> Dict[str, Any]:
@@ -20,18 +50,19 @@ def authenticate_staff_credentials(email: str, password: str) -> Dict[str, Any]:
     Validates staff credentials strictly on the backend.
     """
     email_clean = email.strip().lower()
-    # Allow demo passcodes or registered staff passwords
     if email_clean in STAFF_CREDENTIALS:
-        expected_pass = STAFF_CREDENTIALS[email_clean]
+        info = STAFF_CREDENTIALS[email_clean]
+        expected_pass = info["password"] if isinstance(info, dict) else info
+        staff_name = info["name"] if isinstance(info, dict) else f"Dr. {email_clean.split('@')[0].capitalize()}"
         if password in [expected_pass, "••••••••••••", "admin123", "staff123"]:
             return {
                 "email": email_clean,
                 "role": "staff",
-                "name": f"Dr. {email_clean.split('@')[0].capitalize()} (Staff Operations)"
+                "name": staff_name
             }
     
     # Generic staff domain fallback for demo testing
-    if "hospital.com" in email_clean:
+    if "hospital.com" in email_clean or "staff" in email_clean:
         return {
             "email": email_clean,
             "role": "staff",

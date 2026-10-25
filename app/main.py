@@ -6,9 +6,12 @@ import os
 import json
 from typing import Optional, Dict, Any
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.orm import Session
+
+from app.db.database import get_db, init_db
 
 from app.config import settings
 from app.logging_config import StructuredLoggingMiddleware, logger
@@ -189,7 +192,9 @@ from app.auth import (
     parse_token, 
     require_staff_role, 
     authenticate_staff_credentials, 
-    verify_patient_op_record
+    verify_patient_op_record,
+    register_new_staff,
+    get_all_staff_members
 )
 
 
@@ -214,6 +219,25 @@ def login_staff_user(payload: Dict[str, Any]):
     }
 
 
+@app.post("/auth/register-staff", tags=["Authentication"])
+def register_staff_endpoint(payload: Dict[str, Any]):
+    """
+    Registers a new staff member email, password, and name.
+    """
+    email = payload.get("email", "")
+    password = payload.get("password", "")
+    name = payload.get("name")
+    return register_new_staff(email=email, password=password, name=name)
+
+
+@app.get("/staff/list-registered", tags=["Authentication"])
+def get_registered_staff_endpoint():
+    """
+    Returns list of all registered hospital staff emails and roles.
+    """
+    return get_all_staff_members()
+
+
 @app.post("/auth/patient-verify", tags=["Authentication"])
 def verify_patient_identity(payload: Dict[str, Any]):
     """
@@ -232,6 +256,25 @@ def verify_patient_identity(payload: Dict[str, Any]):
         "op_number": p_info["op_number"],
         "patient_name": p_info["patient_name"],
         "role": "patient"
+    }
+
+
+@app.get("/admin/all-data", tags=["Admin Whole Data Overview"])
+def get_whole_data_overview_endpoint(db: Session = Depends(get_db)):
+    """
+    Whole Data Overview Endpoint: Returns total encounters dataset summary, live hospital queues, registered staff, feedback logs, and audit trails.
+    """
+    return {
+        "total_dataset_encounters": 24002,
+        "dataset_columns": [
+            "department_name", "day_of_week", "hour_of_day", "queue_position", 
+            "patient_arrival_type", "active_doctors_count", "actual_waiting_time_min"
+        ],
+        "registered_staff_members": get_all_staff_members(),
+        "live_department_states": hospital_state.get_all_states(),
+        "continuous_feedback_summary": evaluate_continuous_feedback_metrics(db=db),
+        "recent_audit_logs": get_recent_audit_logs(db=db, limit=10),
+        "model_registry": metadata
     }
 
 
@@ -341,3 +384,167 @@ def simulate_staff_what_if(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+# --- Phase 12 Architecture Endpoints & WebSockets ---
+from fastapi import WebSocket, WebSocketDisconnect, Depends
+from sqlalchemy.orm import Session
+
+from app.db.database import init_db, get_db
+from app.websockets import ws_manager
+from app.analytics import detect_department_bottlenecks, forecast_future_queue, generate_ai_staff_recommendation
+from app.feedback_loop import record_prediction_outcome, evaluate_continuous_feedback_metrics
+from app.audit import get_recent_audit_logs, log_security_event
+
+# Initialize DB tables
+init_db()
+
+
+@app.websocket("/ws/queue")
+async def websocket_queue_endpoint(websocket: WebSocket):
+    """
+    Real-time push WebSocket endpoint for live queue updates without page refreshes.
+    """
+    await ws_manager.connect(websocket)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+
+
+@app.get("/analytics/bottlenecks", tags=["Operations Analytics"])
+def get_bottlenecks_endpoint():
+    """
+    Returns live bottleneck analysis and capacity risk levels across all hospital departments.
+    """
+    return detect_department_bottlenecks()
+
+
+@app.get("/analytics/forecast/{department_name}", tags=["Operations Analytics"])
+def get_queue_forecast_endpoint(department_name: str):
+    """
+    Returns future queue forecasting projections for T+15m, T+30m, and T+60m.
+    """
+    return forecast_future_queue(department_name)
+
+
+@app.get("/analytics/recommendation/{department_name}", tags=["Operations Analytics"])
+def get_ai_recommendation_endpoint(department_name: str):
+    """
+    Returns automated AI staffing action recommendations for a department.
+    """
+    return generate_ai_staff_recommendation(department_name)
+
+
+@app.post("/feedback/record", tags=["ML Feedback Loop"])
+def record_feedback_endpoint(
+    ticket_code: str = Query(...),
+    department_name: str = Query(...),
+    predicted_wait_min: float = Query(...),
+    actual_wait_min: float = Query(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Records actual wait outcome to update continuous model accuracy metrics.
+    """
+    return record_prediction_outcome(
+        db=db,
+        ticket_code=ticket_code,
+        department_name=department_name,
+        predicted_wait_min=predicted_wait_min,
+        actual_wait_min=actual_wait_min
+    )
+
+
+@app.get("/feedback/metrics", tags=["ML Feedback Loop"])
+def get_feedback_metrics_endpoint(
+    department_name: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns continuous MAE, RMSE, prediction bias, and drift alert status from logged feedback.
+    """
+    return evaluate_continuous_feedback_metrics(db=db, department_name=department_name)
+
+
+@app.get("/audit/logs", tags=["Security & Compliance"])
+def get_audit_logs_endpoint(
+    limit: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db)
+):
+    """
+    Retrieves recent administrative and security audit logs.
+    """
+    return get_recent_audit_logs(db=db, limit=limit)
+
+
+# --- Phase 13 Enterprise Fleet & MLOps Endpoints ---
+from models.retrain_pipeline import trigger_autonomous_retraining
+from app.notifications import send_queue_position_sms, get_sent_notifications_log
+from app.fleet import get_regional_network_status, recommend_patient_rerouting
+from app.reports import generate_executive_daily_summary
+
+
+@app.post("/mlops/auto-retrain", tags=["Autonomous MLOps"])
+def trigger_mlops_auto_retrain():
+    """
+    Triggers autonomous model retraining,Quality Gate validation, and zero-downtime hot-swap.
+    """
+    result = trigger_autonomous_retraining()
+    if result["status"] == "SUCCESS":
+        # Reload predictor instance live without server restart
+        load_artifacts()
+    return result
+
+
+@app.post("/notifications/send-sms", tags=["Patient Alerts"])
+def send_patient_position_sms_endpoint(
+    op_number: str = Query(...),
+    patient_name: str = Query(...),
+    department_name: str = Query(...),
+    queue_position: int = Query(...),
+    room_number: str = Query("204")
+):
+    """
+    Dispatches automated SMS alert to patient when queue position reaches #3.
+    """
+    return send_queue_position_sms(
+        op_number=op_number,
+        patient_name=patient_name,
+        department_name=department_name,
+        queue_position=queue_position,
+        room_number=room_number
+    )
+
+
+@app.get("/notifications/logs", tags=["Patient Alerts"])
+def get_notification_logs_endpoint(limit: int = Query(10, ge=1, le=50)):
+    """
+    Returns recent sent SMS/WhatsApp alerts log.
+    """
+    return get_sent_notifications_log(limit=limit)
+
+
+@app.get("/fleet/network-status", tags=["Multi-Hospital Fleet"])
+def get_fleet_network_status_endpoint():
+    """
+    Returns live regional capacity status across the multi-hospital network.
+    """
+    return get_regional_network_status()
+
+
+@app.get("/fleet/reroute/{department_name}", tags=["Multi-Hospital Fleet"])
+def recommend_reroute_endpoint(department_name: str):
+    """
+    Returns patient load-balancing rerouting recommendations when local congestion is high.
+    """
+    return recommend_patient_rerouting(department_name)
+
+
+@app.get("/reports/executive-summary", tags=["Executive Analytics"])
+def get_executive_summary_report():
+    """
+    Generates daily executive board summary covering patient throughput, doctor utilization, and ML accuracy.
+    """
+    return generate_executive_daily_summary()
