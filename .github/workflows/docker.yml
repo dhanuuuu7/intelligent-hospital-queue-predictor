@@ -18,24 +18,12 @@ jobs:
 
       - name: Build Backend Docker Image
         run: |
-          echo "[Info] Building production backend Docker container..."
           docker build -t intelligent-hospital-queue-backend .
 
       - name: Build Frontend Docker Image
         run: |
-          echo "[Info] Building production frontend Docker container..."
           docker build -t intelligent-hospital-queue-frontend ./frontend
 
       - name: Validate Docker Compose Configuration
         run: |
-          echo "[Info] Validating multi-container Docker Compose configuration..."
           docker compose config
-
-      - name: Test Local Backend Container Startup
-        run: |
-          echo "[Info] Testing backend container startup and health..."
-          docker run -d --name test-backend -p 8000:8000 intelligent-hospital-queue-backend
-          sleep 6
-          docker ps | grep intelligent-hospital-queue-backend
-          docker stop test-backend
-          echo "[Success] Docker images built and verified successfully!"

@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY simulator/ simulator/
 COPY models/ models/
 COPY app/ app/
+COPY data/ data/
 
 # Expose backend port
 EXPOSE 8000
